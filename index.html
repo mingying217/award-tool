@@ -424,6 +424,16 @@
       <h1>來做獎狀囉🐣</h1>
 
       <h2><svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>底稿</h2>
+      <div class="row">
+        <div>
+          <label for="templateCategory">底稿類別</label>
+          <select id="templateCategory"></select>
+        </div>
+        <div>
+          <label for="builtInTemplate">公版底稿</label>
+          <select id="builtInTemplate"></select>
+        </div>
+      </div>
       <input class="file-input" id="templateFile" type="file" accept="image/jpeg,image/png,image/webp">
 
       <h2><svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>文字內容</h2>
@@ -630,8 +640,59 @@
       { label: "源泉圓體 M", family: '"GenSenRounded TW M", "源泉圓體 M", "Noto Sans TC", sans-serif', weight: "500" }
     ];
 
+    const builtInTemplateGroups = [
+      {
+        id: "school-personal",
+        label: "學校_個人",
+        templates: [
+          { id: "school-personal-first", label: "第一名", src: "assets/templates/school-personal/first.png" },
+          { id: "school-personal-second", label: "第二名", src: "assets/templates/school-personal/second.png" },
+          { id: "school-personal-third", label: "第三名", src: "assets/templates/school-personal/third.png" },
+          { id: "school-personal-excellent", label: "表現優異", src: "assets/templates/school-personal/excellent.png" }
+        ]
+      },
+      {
+        id: "school-group",
+        label: "學校_團體",
+        templates: [
+          { id: "school-group-first", label: "第一名", src: "assets/templates/school-group/first.png" },
+          { id: "school-group-second", label: "第二名", src: "assets/templates/school-group/second.png" },
+          { id: "school-group-third", label: "第三名", src: "assets/templates/school-group/third.png" },
+          { id: "school-group-excellent", label: "表現優異", src: "assets/templates/school-group/excellent.png" }
+        ]
+      },
+      {
+        id: "school-personal-custom",
+        label: "學校_個人(客製)",
+        templates: [
+          { id: "school-personal-custom-first", label: "第一名(客製)", src: "assets/templates/school-personal-custom/first-custom.png" },
+          { id: "school-personal-custom-second", label: "第二名(客製)", src: "assets/templates/school-personal-custom/second-custom.png" },
+          { id: "school-personal-custom-third", label: "第三名(客製)", src: "assets/templates/school-personal-custom/third-custom.png" },
+          { id: "school-personal-custom-excellent", label: "表現優異(客製)", src: "assets/templates/school-personal-custom/excellent-custom.png" }
+        ]
+      },
+      {
+        id: "school-group-custom",
+        label: "學校_團體(客製)",
+        templates: [
+          { id: "school-group-custom-first", label: "第一名(客製)", src: "assets/templates/school-group-custom/first-custom.png" },
+          { id: "school-group-custom-second", label: "第二名(客製)", src: "assets/templates/school-group-custom/second-custom.png" },
+          { id: "school-group-custom-third", label: "第三名(客製)", src: "assets/templates/school-group-custom/third-custom.png" },
+          { id: "school-group-custom-excellent", label: "表現優異(客製)", src: "assets/templates/school-group-custom/excellent-custom.png" }
+        ]
+      },
+      {
+        id: "cram-exam",
+        label: "補教_模考",
+        templates: [
+          { id: "cram-exam-demo", label: "模考獎狀示意", src: "assets/templates/cram-exam/mock-exam.png" }
+        ]
+      }
+    ];
+
     const state = {
       image: null,
+      builtInTemplateId: "",
       mode: "single",
       showGrid: false,
       current: 0,
@@ -687,6 +748,64 @@
         option.textContent = font.label;
         $("blockFontFamily").appendChild(option);
       });
+    }
+
+    function populateTemplateCategories() {
+      $("templateCategory").innerHTML = "";
+      const empty = document.createElement("option");
+      empty.value = "";
+      empty.textContent = "請選擇類別";
+      $("templateCategory").appendChild(empty);
+      builtInTemplateGroups.forEach((group) => {
+        const option = document.createElement("option");
+        option.value = group.id;
+        option.textContent = group.label;
+        $("templateCategory").appendChild(option);
+      });
+      renderBuiltInTemplateOptions();
+    }
+
+    function findBuiltInTemplate(id) {
+      for (const group of builtInTemplateGroups) {
+        const template = group.templates.find((item) => item.id === id);
+        if (template) return { group, template };
+      }
+      return null;
+    }
+
+    function renderBuiltInTemplateOptions() {
+      const group = builtInTemplateGroups.find((item) => item.id === $("templateCategory").value);
+      $("builtInTemplate").innerHTML = "";
+      const empty = document.createElement("option");
+      empty.value = "";
+      empty.textContent = group ? "請選擇底稿" : "先選擇類別";
+      $("builtInTemplate").appendChild(empty);
+      (group?.templates || []).forEach((template) => {
+        const option = document.createElement("option");
+        option.value = template.id;
+        option.textContent = template.label;
+        $("builtInTemplate").appendChild(option);
+      });
+      $("builtInTemplate").disabled = !group;
+    }
+
+    function loadBuiltInTemplate(templateId) {
+      const match = findBuiltInTemplate(templateId);
+      if (!match) {
+        state.builtInTemplateId = "";
+        return;
+      }
+      const image = new Image();
+      image.onload = () => {
+        pushHistory();
+        state.image = image;
+        state.builtInTemplateId = templateId;
+        $("templateFile").value = "";
+        render();
+        setStatus(`已載入公版底稿：${match.group.label} / ${match.template.label}`);
+      };
+      image.onerror = () => setStatus("公版底稿載入失敗，請確認圖片已發布到網站。", true);
+      image.src = match.template.src;
     }
 
     function getRecord(index = state.current) {
@@ -1902,11 +2021,21 @@
     }
 
     function bindEvents() {
+      $("templateCategory").addEventListener("change", () => {
+        renderBuiltInTemplateOptions();
+        $("builtInTemplate").value = "";
+      });
+      $("builtInTemplate").addEventListener("change", (event) => {
+        if (event.target.value) loadBuiltInTemplate(event.target.value);
+      });
       $("templateFile").addEventListener("change", (event) => {
         const file = event.target.files[0];
         if (!file) return;
         const image = new Image();
         image.onload = () => {
+          state.builtInTemplateId = "";
+          $("templateCategory").value = "";
+          renderBuiltInTemplateOptions();
           state.image = image;
           render();
           setStatus(`已載入底稿：${file.name}`);
@@ -1972,6 +2101,7 @@
     }
 
     populateFonts();
+    populateTemplateCategories();
     renderBlockSelect();
     renderSheetChoice();
     bindEvents();
