@@ -1,0 +1,1984 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>來做獎狀囉🐣</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7f8;
+      --panel: #ffffff;
+      --text: #1e252b;
+      --muted: #66727d;
+      --line: #d9e0e5;
+      --accent: #176f6b;
+      --accent-2: #9a4d2d;
+      --danger: #b4332a;
+      --shadow: 0 10px 26px rgba(28, 43, 54, .10);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(330px, 410px) minmax(0, 1fr);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    aside {
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      padding: 16px 18px;
+      overflow: auto;
+    }
+
+    main {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.9);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    aside > h1 {
+      color: var(--accent);
+      font-size: 23px;
+      font-weight: 900;
+    }
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 20px 0 10px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0;
+      color: #394750;
+    }
+
+    #previewTitle {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      font-weight: 900;
+    }
+
+    aside h2 {
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+    }
+
+    aside h1 + h2 {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    h2 .section-icon {
+      width: 19px;
+      height: 19px;
+      color: var(--accent);
+      flex: 0 0 auto;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    input, textarea, select, button { font: inherit; }
+
+    input[type="text"], input[type="number"], input[type="url"], textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfc;
+      color: var(--text);
+      padding: 8px 9px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    #blockTemplate {
+      min-height: 76px;
+      line-height: 1.45;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(23,111,107,.14);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .triple {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 9px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--text);
+      padding: 8px 11px;
+      cursor: pointer;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    button.primary {
+      color: #fff;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    button.secondary {
+      border-color: #c98f55;
+      color: #6f381c;
+      background: #fff7ef;
+    }
+
+    button.danger {
+      border-color: #e0b8b3;
+      color: var(--danger);
+      background: #fff8f7;
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .icon {
+      width: 17px;
+      height: 17px;
+      display: inline-block;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: 0 0 auto;
+    }
+
+    .file-input {
+      width: 100%;
+      border: 1px dashed #b7c3ca;
+      background: #fbfcfc;
+      border-radius: 7px;
+      padding: 10px;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+
+    .segmented button {
+      border: 0;
+      border-radius: 0;
+      background: #fff;
+    }
+
+    .segmented button.active {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    #gridToggle.active {
+      color: #fff;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .muted, .status {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .status {
+      min-height: 20px;
+      margin-top: 8px;
+    }
+
+    .list {
+      max-height: 180px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfc;
+    }
+
+    .person, .block-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 9px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .person:last-child, .block-item:last-child { border-bottom: 0; }
+    .person button, .block-item button {
+      min-height: 28px;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .stage-wrap {
+      padding: 10px 16px;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .stage {
+      position: relative;
+      width: min(100%, calc((100vh - 126px) * 1.414), 1180px);
+      aspect-ratio: 1.414 / 1;
+      margin: 0 auto;
+      background: #e8ecef;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .page-stage {
+      position: relative;
+      width: min(100%, 1050px);
+      aspect-ratio: 1.414 / 1;
+      margin: 0 auto 18px;
+      background: #e8ecef;
+      border: 2px solid transparent;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .page-stage.active {
+      border-color: var(--accent);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+    }
+
+    .marker {
+      position: absolute;
+      transform: translate(-50%, calc(-100% - 30px));
+      border: 1px solid rgba(23,111,107,.92);
+      background: rgba(255,255,255,.88);
+      color: var(--accent);
+      border-radius: 7px;
+      padding: 4px 7px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: grab;
+      user-select: none;
+      box-shadow: 0 3px 9px rgba(0,0,0,.12);
+    }
+
+    .marker:active { cursor: grabbing; }
+    .marker.selected {
+      color: var(--accent-2);
+      border-color: rgba(154,77,45,.9);
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 16px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .hidden { display: none !important; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(30, 37, 43, .36);
+    }
+
+    .modal-panel {
+      width: min(560px, 100%);
+      max-height: min(720px, 90vh);
+      overflow: auto;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .modal-panel h2 {
+      margin-top: 0;
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .field-editor {
+      display: grid;
+      grid-template-columns: minmax(110px, 160px) 1fr;
+      gap: 8px;
+      align-items: start;
+      margin: 9px 0;
+    }
+
+    .field-editor label {
+      margin-top: 8px;
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+      main { min-height: 70vh; }
+      header, .footer { padding-left: 12px; padding-right: 12px; }
+      .stage-wrap { padding: 12px; }
+      .stage { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <h1>來做獎狀囉🐣</h1>
+
+      <h2><svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>底稿</h2>
+      <input class="file-input" id="templateFile" type="file" accept="image/jpeg,image/png,image/webp">
+
+      <h2><svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>文字內容</h2>
+      <label for="formatPreset">格式範本</label>
+      <select id="formatPreset">
+        <option value="schoolPersonal">班級＋姓名(學校個人)</option>
+        <option value="schoolGroup">班級＋姓名(學校團體)</option>
+        <option value="cram">補習班＋姓名(補習班)</option>
+      </select>
+      <div class="row">
+        <div>
+          <label for="blockSelect">文字區塊</label>
+          <select id="blockSelect"></select>
+        </div>
+        <div>
+          <label for="blockLabel">區塊名稱</label>
+          <input id="blockLabel" type="text">
+        </div>
+      </div>
+      <label for="blockTemplate">文字內容 / 欄位樣板</label>
+      <textarea id="blockTemplate" placeholder="{A} {B}"></textarea>
+      <div class="check-row">
+        <input id="blockVisible" type="checkbox">
+        <label for="blockVisible" style="margin:0;">顯示此文字區塊</label>
+      </div>
+      <div class="actions">
+        <button id="addBlock" type="button">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          新增文字
+        </button>
+        <button id="removeBlock" class="danger" type="button">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          移除
+        </button>
+        <button id="alignLeft" type="button">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 4v16"/><path d="M8 7h12"/><path d="M8 17h8"/></svg>
+          靠左對齊
+        </button>
+        <button id="alignRight" type="button">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M20 4v16"/><path d="M4 7h12"/><path d="M8 17h8"/></svg>
+          靠右對齊
+        </button>
+        <button id="alignTop" type="button">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16"/><path d="M8 8v12"/><path d="M16 8v8"/></svg>
+          頂部對齊
+        </button>
+        <button id="alignBottom" type="button">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 4v12"/><path d="M17 8v8"/><path d="M5 16h14"/></svg>
+          底部對齊
+        </button>
+      </div>
+
+      <h2><svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M2 12h20"/><path d="M19 5l-4 4"/><path d="M5 19l4-4"/><path d="M5 5l4 4"/><path d="M19 19l-4-4"/></svg>位置</h2>
+      <div class="muted" id="scopeHint">單頁模式會套用到所有頁面；全頁模式只調整目前選取頁。</div>
+      <div class="triple">
+        <div>
+          <label for="blockX">X</label>
+          <input id="blockX" type="number" min="0" max="100" step=".1">
+        </div>
+        <div>
+          <label for="blockY">Y</label>
+          <input id="blockY" type="number" min="0" max="100" step=".1">
+        </div>
+        <div>
+          <label for="blockAlign">對齊</label>
+          <select id="blockAlign">
+            <option value="center">置中</option>
+            <option value="left">靠左</option>
+            <option value="right">靠右</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="blockFontSize">字級</label>
+          <input id="blockFontSize" type="number" min="8" max="220">
+        </div>
+        <div>
+          <label for="blockLineHeight">行距</label>
+          <input id="blockLineHeight" type="number" min="0.8" max="2" step="0.05">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="blockColor">顏色</label>
+          <input id="blockColor" type="color">
+        </div>
+        <div></div>
+      </div>
+      <label for="blockFontFamily">字型</label>
+      <select id="blockFontFamily"></select>
+
+      <h2><svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>資料匯入</h2>
+      <label for="excelFile">Excel 檔</label>
+      <input class="file-input" id="excelFile" type="file" accept=".xlsx,.xls,.csv,.tsv">
+      <label for="sheetChoice">工作表 / 名單</label>
+      <select id="sheetChoice"></select>
+      <label for="sheetUrl">Google Sheet 公開連結或 CSV 連結</label>
+      <input id="sheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+      <div class="actions">
+        <button id="loadSheet" class="primary" type="button">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          匯入連結
+        </button>
+        <button id="loadSample" type="button">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+          範例
+        </button>
+      </div>
+      <label for="csvPaste">或貼上 CSV</label>
+      <textarea id="csvPaste" placeholder="班級,姓名&#10;701,陳翰翰&#10;702,林小雲"></textarea>
+      <div class="actions">
+        <button id="clearImportData" class="danger" type="button">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          清除目前匯入資料
+        </button>
+        <button id="parseCsv" type="button">套用貼上的資料</button>
+      </div>
+      <div id="status" class="status"></div>
+
+      <h2><svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>名單</h2>
+      <div id="peopleList" class="list"></div>
+    </aside>
+
+    <main>
+      <header>
+        <div>
+          <h1 id="previewTitle">預覽</h1>
+          <div class="muted" id="recordInfo">尚未匯入名單</div>
+        </div>
+        <div class="actions">
+          <button id="undoAction" type="button" title="返回">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9 14l-4-4 4-4"/><path d="M5 10h10a4 4 0 0 1 0 8h-1"/></svg>
+          </button>
+          <div class="segmented" style="width:190px;">
+            <button id="singleMode" class="active" type="button">單頁</button>
+            <button id="allMode" type="button">全頁</button>
+          </div>
+          <button id="gridToggle" type="button" title="顯示網格">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+          </button>
+          <button id="prevRecord" type="button" title="上一筆">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button id="nextRecord" type="button" title="下一筆">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <button id="deleteCurrentPage" class="danger" type="button">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            刪除此頁
+          </button>
+          <button id="downloadOne" class="secondary" type="button">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            下載此頁
+          </button>
+          <button id="downloadAll" type="button">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+            逐張下載
+          </button>
+          <button id="downloadPdf" class="primary" type="button">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/></svg>
+            合併 PDF
+          </button>
+        </div>
+      </header>
+
+      <div class="stage-wrap" id="stageWrap">
+        <div class="stage" id="singleStage">
+          <canvas id="certCanvas" width="1600" height="1131"></canvas>
+          <div id="singleMarkers"></div>
+        </div>
+        <div id="allPages" class="hidden"></div>
+      </div>
+
+      <div class="footer">
+        <span>Excel/Sheet 可用 A 欄班級、B 欄姓名，也可用 {A}、{B}、{欄位名稱} 插入資料。</span>
+        <span id="canvasSize">1600 × 1131</span>
+      </div>
+    </main>
+  </div>
+
+  <div id="recordEditor" class="modal hidden">
+    <div class="modal-panel">
+      <h2>編輯匯入資料</h2>
+      <div id="recordEditorFields"></div>
+      <div class="actions">
+        <button id="saveRecordEdit" class="primary" type="button">儲存</button>
+        <button id="cancelRecordEdit" type="button">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const canvas = $("certCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const fontOptions = [
+      { label: "思源黑體 Medium", family: '"Noto Sans TC", "Microsoft JhengHei", sans-serif', weight: "500" },
+      { label: "思源黑體 Bold", family: '"Noto Sans TC", "Microsoft JhengHei", sans-serif', weight: "700" },
+      { label: "思源黑體 Black", family: '"Noto Sans TC", "Microsoft JhengHei", sans-serif', weight: "900" },
+      { label: "源泉圓體 H", family: '"GenSenRounded TW H", "源泉圓體 H", "Noto Sans TC", sans-serif', weight: "900" },
+      { label: "源泉圓體 B", family: '"GenSenRounded TW B", "源泉圓體 B", "Noto Sans TC", sans-serif', weight: "700" },
+      { label: "源泉圓體 M", family: '"GenSenRounded TW M", "源泉圓體 M", "Noto Sans TC", sans-serif', weight: "500" }
+    ];
+
+    const state = {
+      image: null,
+      mode: "single",
+      showGrid: false,
+      current: 0,
+      activeSheet: "",
+      sheets: {},
+      records: [],
+      selectedBlockId: "school",
+      blocks: [
+        makeBlock("school", "學校名稱", "新北市翰林國中", 62.4, 27.5, 100, "center", 0, true, true, "#090405"),
+        makeBlock("name", "班級＋姓名(學校個人)", "{A} {B}", 26.4, 43.2, 100, "center", 2, true, true, "#1757a0"),
+        makeBlock("cramClass", "補習班(補習班)", "{A}\n{B}", 39.8, 48, 107, "center", 3, true, false, "#1757a0", 1.2),
+        makeBlock("cramName", "姓名(補習班)", "{姓名}", 52.3, 48.9, 174, "center", 3, true, false, "#1757a0", 1.2)
+      ],
+      pageOverrides: {},
+      alignmentGuide: null,
+      history: []
+    };
+    let editingRecordIndex = -1;
+
+    const placeholderImage = new Image();
+    placeholderImage.onload = () => {
+      if (!state.image) render();
+    };
+    placeholderImage.src = "assets/certificate-placeholder.png";
+
+    function makeBlock(id, label, template, x, y, size, align, fontIndex = 0, system = false, visible = true, color = "#26211c", lineHeight = 1.22) {
+      return {
+        id,
+        label,
+        template,
+        visible,
+        x,
+        y,
+        align,
+        size,
+        lineHeight,
+        color,
+        fontIndex,
+        system
+      };
+    }
+
+    function setStatus(message, isError = false) {
+      $("status").textContent = message;
+      $("status").style.color = isError ? "var(--danger)" : "var(--muted)";
+    }
+
+    function populateFonts() {
+      $("blockFontFamily").innerHTML = "";
+      fontOptions.forEach((font, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = font.label;
+        $("blockFontFamily").appendChild(option);
+      });
+    }
+
+    function getRecord(index = state.current) {
+      return state.records[index] || { A: "701", B: "陳翰翰", C: "陳翰翰", 班級: "701", 姓名: "陳翰翰", 補習班名稱: "翰林補習班" };
+    }
+
+    function getOverride(index, blockId) {
+      return state.pageOverrides[index]?.[blockId] || null;
+    }
+
+    function getEffectiveBlock(block, index = state.current) {
+      return { ...block, ...(getOverride(index, block.id) || {}) };
+    }
+
+    function cloneData(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function snapshotState() {
+      return {
+        mode: state.mode,
+        showGrid: state.showGrid,
+        current: state.current,
+        activeSheet: state.activeSheet,
+        sheets: cloneData(state.sheets),
+        records: cloneData(state.records),
+        selectedBlockId: state.selectedBlockId,
+        blocks: cloneData(state.blocks),
+        pageOverrides: cloneData(state.pageOverrides)
+      };
+    }
+
+    function pushHistory() {
+      state.history.push(snapshotState());
+      if (state.history.length > 80) state.history.shift();
+      updateUndoButton();
+    }
+
+    function restoreSnapshot(snapshot) {
+      Object.assign(state, {
+        mode: snapshot.mode,
+        showGrid: snapshot.showGrid,
+        current: snapshot.current,
+        activeSheet: snapshot.activeSheet,
+        sheets: snapshot.sheets,
+        records: snapshot.records,
+        selectedBlockId: snapshot.selectedBlockId,
+        blocks: snapshot.blocks,
+        pageOverrides: snapshot.pageOverrides
+      });
+      renderSheetChoice();
+      renderBlockSelect();
+      renderPeopleList();
+      $("sheetChoice").value = state.activeSheet || "";
+      $("singleMode").classList.toggle("active", state.mode === "single");
+      $("allMode").classList.toggle("active", state.mode === "all");
+      $("gridToggle").classList.toggle("active", state.showGrid);
+      $("scopeHint").textContent = state.mode === "single"
+        ? "單頁模式會套用到所有頁面；全頁模式只調整目前選取頁。"
+        : "全頁模式正在編輯目前選取頁，不會影響其他頁面。";
+      render();
+      updateUndoButton();
+    }
+
+    function undoLastAction() {
+      const snapshot = state.history.pop();
+      if (!snapshot) return;
+      restoreSnapshot(snapshot);
+      setStatus("已返回前一步");
+    }
+
+    function updateUndoButton() {
+      const button = $("undoAction");
+      if (button) button.disabled = !state.history.length;
+    }
+
+    function updateBlockPatch(blockId, patch) {
+      if (state.mode === "all") {
+        state.pageOverrides[state.current] ||= {};
+        state.pageOverrides[state.current][blockId] ||= {};
+        Object.assign(state.pageOverrides[state.current][blockId], patch);
+      } else {
+        const block = state.blocks.find((item) => item.id === blockId);
+        if (block) Object.assign(block, patch);
+      }
+    }
+
+    function selectedBlock() {
+      return state.blocks.find((block) => block.id === state.selectedBlockId) || state.blocks[0];
+    }
+
+    function toControlY(value) {
+      return clamp(100 - Number(value || 0), 0, 100);
+    }
+
+    function fromControlY(value) {
+      return clamp(100 - Number(value || 0), 0, 100);
+    }
+
+    function setControlValue(id, value) {
+      const input = $(id);
+      if (document.activeElement !== input) input.value = value;
+    }
+
+    function syncBlockControls() {
+      const block = selectedBlock();
+      if (!block) return;
+      const effective = getEffectiveBlock(block, state.current);
+      $("blockSelect").value = block.id;
+      setControlValue("blockLabel", effective.label);
+      setControlValue("blockTemplate", effective.template);
+      $("blockVisible").checked = effective.visible;
+      setControlValue("blockX", Number(effective.x).toFixed(1));
+      setControlValue("blockY", toControlY(effective.y).toFixed(1));
+      $("blockAlign").value = effective.align;
+      setControlValue("blockFontSize", effective.size);
+      setControlValue("blockLineHeight", Number(effective.lineHeight || 1.22).toFixed(2));
+      $("blockColor").value = effective.color;
+      $("blockFontFamily").value = String(effective.fontIndex);
+    }
+
+    function renderBlockSelect() {
+      $("blockSelect").innerHTML = "";
+      state.blocks.forEach((block) => {
+        const option = document.createElement("option");
+        option.value = block.id;
+        option.textContent = block.label;
+        $("blockSelect").appendChild(option);
+      });
+      if (!state.blocks.some((block) => block.id === state.selectedBlockId)) {
+        state.selectedBlockId = state.blocks[0]?.id || "";
+      }
+      syncBlockControls();
+    }
+
+    function drawPlaceholder(targetCanvas, targetCtx) {
+      if (placeholderImage.complete && placeholderImage.naturalWidth) {
+        targetCanvas.width = placeholderImage.naturalWidth;
+        targetCanvas.height = placeholderImage.naturalHeight;
+        targetCtx.drawImage(placeholderImage, 0, 0, targetCanvas.width, targetCanvas.height);
+        return;
+      }
+      targetCanvas.width = 3508;
+      targetCanvas.height = 2481;
+      targetCtx.fillStyle = "#fffdf8";
+      targetCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+    }
+
+    function prepareCanvas(targetCanvas, targetCtx) {
+      if (state.image) {
+        targetCanvas.width = state.image.naturalWidth || state.image.width;
+        targetCanvas.height = state.image.naturalHeight || state.image.height;
+        targetCtx.drawImage(state.image, 0, 0, targetCanvas.width, targetCanvas.height);
+      } else {
+        drawPlaceholder(targetCanvas, targetCtx);
+      }
+    }
+
+    function normalizeFieldName(name) {
+      return String(name || "").trim().replace(/（/g, "(").replace(/）/g, ")").replace(/\s+/g, "");
+    }
+
+    function fieldValue(record, key) {
+      const clean = String(key || "").trim();
+      const normalized = normalizeFieldName(clean);
+      const aliases = {
+        "補習班名稱": ["補習班名稱", "補習班", "補習班名稱(上)", "補習班名稱（上）", "班級上行", "A"],
+        "補習班名稱(上)": ["補習班名稱(上)", "補習班名稱（上）", "班級上行", "A"],
+        "補習班名稱(下)": ["補習班名稱(下)", "補習班名稱（下）", "班級下行", "B"],
+        "姓名": ["姓名", "name", "Name", "C", "B"],
+        "班級": ["班級", "class", "Class", "A"]
+      };
+      const candidates = [clean, normalized, ...(aliases[normalized] || [])];
+      for (const candidate of candidates) {
+        if (record[candidate] !== undefined && record[candidate] !== null && String(record[candidate]).trim() !== "") {
+          return record[candidate];
+        }
+      }
+      return "";
+    }
+
+    function valueForTemplate(template, record) {
+      return String(template || "").replace(/\{([^}]+)\}/g, (_, key) => {
+        return fieldValue(record, key);
+      });
+    }
+
+    function drawMultilineText(targetCtx, text, x, y, lineHeight) {
+      const lines = String(text || "").split(/\r?\n/);
+      const startY = y - ((lines.length - 1) * lineHeight / 2);
+      lines.forEach((line, index) => {
+        targetCtx.fillText(line, x, startY + index * lineHeight);
+      });
+    }
+
+    function textBlockBottomOffset(block, index) {
+      const effective = getEffectiveBlock(block, index);
+      const size = Number(effective.size) || 48;
+      const lineHeight = size * (Number(effective.lineHeight) || 1.22);
+      const lines = valueForTemplate(effective.template, getRecord(index)).split(/\r?\n/).length || 1;
+      return ((lines - 1) * lineHeight / 2) + (size / 2);
+    }
+
+    function textBlockBounds(targetCtx, targetCanvas, block, index) {
+      const effective = getEffectiveBlock(block, index);
+      const font = fontOptions[Number(effective.fontIndex)] || fontOptions[0];
+      const size = Number(effective.size) || 48;
+      const lineHeight = size * (Number(effective.lineHeight) || 1.22);
+      const lines = valueForTemplate(effective.template, getRecord(index)).split(/\r?\n/);
+      targetCtx.save();
+      targetCtx.font = `${font.weight} ${size}px ${font.family}`;
+      const width = Math.max(1, ...lines.map((line) => targetCtx.measureText(line || " ").width));
+      targetCtx.restore();
+      const height = size + Math.max(0, lines.length - 1) * lineHeight;
+      const x = targetCanvas.width * effective.x / 100;
+      const y = targetCanvas.height * effective.y / 100;
+      const left = effective.align === "right" ? x - width : effective.align === "left" ? x : x - width / 2;
+      return {
+        left,
+        top: y - height / 2,
+        width,
+        height
+      };
+    }
+
+    function drawBlock(targetCtx, targetCanvas, block, index) {
+      const effective = getEffectiveBlock(block, index);
+      if (!effective.visible) return;
+      const font = fontOptions[Number(effective.fontIndex)] || fontOptions[0];
+      const size = Number(effective.size) || 48;
+      targetCtx.save();
+      targetCtx.fillStyle = effective.color;
+      targetCtx.font = `${font.weight} ${size}px ${font.family}`;
+      targetCtx.textAlign = effective.align;
+      targetCtx.textBaseline = "middle";
+      drawMultilineText(
+        targetCtx,
+        valueForTemplate(effective.template, getRecord(index)),
+        targetCanvas.width * effective.x / 100,
+        targetCanvas.height * effective.y / 100,
+        size * (Number(effective.lineHeight) || 1.22)
+      );
+      targetCtx.restore();
+    }
+
+    function renderCanvas(targetCanvas, index) {
+      const targetCtx = targetCanvas.getContext("2d");
+      prepareCanvas(targetCanvas, targetCtx);
+      state.blocks.forEach((block) => drawBlock(targetCtx, targetCanvas, block, index));
+      return targetCanvas;
+    }
+
+    function drawGrid(targetCanvas) {
+      const targetCtx = targetCanvas.getContext("2d");
+      const isLandscape = targetCanvas.width >= targetCanvas.height;
+      const columns = isLandscape ? 29.7 : 21;
+      const rows = isLandscape ? 21 : 29.7;
+      const stepX = targetCanvas.width / columns;
+      const stepY = targetCanvas.height / rows;
+      targetCtx.save();
+      targetCtx.strokeStyle = "rgba(120, 128, 136, .35)";
+      targetCtx.lineWidth = Math.max(0.5, targetCanvas.width / 3508 * 2);
+      for (let x = 0; x <= targetCanvas.width + 0.5; x += stepX) {
+        targetCtx.beginPath();
+        targetCtx.moveTo(x, 0);
+        targetCtx.lineTo(x, targetCanvas.height);
+        targetCtx.stroke();
+      }
+      for (let y = 0; y <= targetCanvas.height + 0.5; y += stepY) {
+        targetCtx.beginPath();
+        targetCtx.moveTo(0, y);
+        targetCtx.lineTo(targetCanvas.width, y);
+        targetCtx.stroke();
+      }
+      targetCtx.restore();
+    }
+
+    function drawBlockSelectionBox(targetCtx, targetCanvas, block, index, solid = false) {
+      if (!block || !getEffectiveBlock(block, index).visible) return;
+      const bounds = textBlockBounds(targetCtx, targetCanvas, block, index);
+      const padding = Math.max(8, targetCanvas.width / 3508 * 16);
+      targetCtx.strokeStyle = solid ? "rgba(23, 111, 107, .95)" : "rgba(23, 111, 107, .78)";
+      targetCtx.lineWidth = Math.max(1, targetCanvas.width / 3508 * 3);
+      targetCtx.setLineDash(solid ? [] : [Math.max(8, targetCanvas.width / 3508 * 14), Math.max(5, targetCanvas.width / 3508 * 9)]);
+      targetCtx.strokeRect(
+        bounds.left - padding,
+        bounds.top - padding,
+        bounds.width + padding * 2,
+        bounds.height + padding * 2
+      );
+    }
+
+    function drawSelectionBox(targetCanvas, index) {
+      const targetCtx = targetCanvas.getContext("2d");
+      const guide = state.alignmentGuide;
+      const selected = selectedBlock();
+      targetCtx.save();
+      if (guide?.ids?.length) {
+        guide.ids.forEach((id) => drawBlockSelectionBox(targetCtx, targetCanvas, state.blocks.find((block) => block.id === id), index, guide.aligned));
+      } else {
+        drawBlockSelectionBox(targetCtx, targetCanvas, selected, index, false);
+      }
+      targetCtx.restore();
+    }
+
+    function renderPreviewCanvas(targetCanvas, index) {
+      renderCanvas(targetCanvas, index);
+      if (state.showGrid) drawGrid(targetCanvas);
+      drawSelectionBox(targetCanvas, index);
+      return targetCanvas;
+    }
+
+    function refreshStageCanvas(stage, index) {
+      const targetCanvas = stage.querySelector("canvas");
+      if (targetCanvas) renderPreviewCanvas(targetCanvas, index);
+    }
+
+    function previewHeight() {
+      if (state.image) return state.image.naturalHeight || state.image.height || canvas.height;
+      if (placeholderImage.complete && placeholderImage.naturalHeight) return placeholderImage.naturalHeight;
+      return canvas.height || 2481;
+    }
+
+    function previewWidth() {
+      if (state.image) return state.image.naturalWidth || state.image.width || canvas.width;
+      if (placeholderImage.complete && placeholderImage.naturalWidth) return placeholderImage.naturalWidth;
+      return canvas.width || 3508;
+    }
+
+    function alignVisibleBlocks(edge) {
+      const visibleBlocks = state.blocks.filter((block) => getEffectiveBlock(block, state.current).visible);
+      if (visibleBlocks.length < 2) return;
+      pushHistory();
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = previewWidth();
+      tempCanvas.height = previewHeight();
+      const tempCtx = tempCanvas.getContext("2d");
+      const height = previewHeight();
+      const width = previewWidth();
+      const bounds = new Map(visibleBlocks.map((block) => [block.id, textBlockBounds(tempCtx, tempCanvas, block, state.current)]));
+      const targets = {
+        left: Math.min(...visibleBlocks.map((block) => bounds.get(block.id).left)),
+        right: Math.max(...visibleBlocks.map((block) => bounds.get(block.id).left + bounds.get(block.id).width)),
+        top: Math.min(...visibleBlocks.map((block) => bounds.get(block.id).top)),
+        bottom: Math.max(...visibleBlocks.map((block) => bounds.get(block.id).top + bounds.get(block.id).height))
+      };
+      visibleBlocks.forEach((block) => {
+        const effective = getEffectiveBlock(block, state.current);
+        const itemBounds = bounds.get(block.id);
+        const patch = {};
+        if (edge === "left") patch.x = clamp((effective.x * width / 100 + targets.left - itemBounds.left) / width * 100, 0, 100);
+        if (edge === "right") patch.x = clamp((effective.x * width / 100 + targets.right - (itemBounds.left + itemBounds.width)) / width * 100, 0, 100);
+        if (edge === "top") patch.y = clamp((effective.y * height / 100 + targets.top - itemBounds.top) / height * 100, 0, 100);
+        if (edge === "bottom") patch.y = clamp((effective.y * height / 100 + targets.bottom - (itemBounds.top + itemBounds.height)) / height * 100, 0, 100);
+        updateBlockPatch(block.id, patch);
+      });
+      state.alignmentGuide = { ids: visibleBlocks.map((block) => block.id), edge, aligned: true };
+      render();
+      setStatus("已將可見文字區塊對齊");
+    }
+
+    function applyAutoAlignmentSnap(blockId, index, targetCanvas) {
+      const selected = state.blocks.find((block) => block.id === blockId);
+      if (!selected) return;
+      const targetCtx = targetCanvas.getContext("2d");
+      const selectedBounds = textBlockBounds(targetCtx, targetCanvas, selected, index);
+      const selectedEffective = getEffectiveBlock(selected, index);
+      const threshold = Math.max(12, targetCanvas.width * 0.006);
+      let best = null;
+      state.blocks.forEach((block) => {
+        if (block.id === blockId || !getEffectiveBlock(block, index).visible) return;
+        const bounds = textBlockBounds(targetCtx, targetCanvas, block, index);
+        [
+          { edge: "left", delta: bounds.left - selectedBounds.left },
+          { edge: "right", delta: bounds.left + bounds.width - (selectedBounds.left + selectedBounds.width) },
+          { edge: "top", delta: bounds.top - selectedBounds.top },
+          { edge: "bottom", delta: bounds.top + bounds.height - (selectedBounds.top + selectedBounds.height) }
+        ].forEach((candidate) => {
+          const distance = Math.abs(candidate.delta);
+          if (distance <= threshold && (!best || distance < best.distance)) {
+            best = { ...candidate, distance, targetId: block.id };
+          }
+        });
+      });
+      if (!best) {
+        state.alignmentGuide = null;
+        return;
+      }
+      if (best.edge === "left" || best.edge === "right") {
+        updateBlockPatch(blockId, { x: clamp((selectedEffective.x * targetCanvas.width / 100 + best.delta) / targetCanvas.width * 100, 0, 100) });
+      } else {
+        updateBlockPatch(blockId, { y: clamp((selectedEffective.y * targetCanvas.height / 100 + best.delta) / targetCanvas.height * 100, 0, 100) });
+      }
+      state.alignmentGuide = { ids: [blockId, best.targetId], edge: best.edge, aligned: true };
+    }
+
+    function refreshSelectedBlockPosition(marker, blockId, index) {
+      const block = state.blocks.find((item) => item.id === blockId);
+      if (!block) return;
+      const effective = getEffectiveBlock(block, index);
+      marker.style.left = `${effective.x}%`;
+      marker.style.top = `${effective.y}%`;
+    }
+
+    function render() {
+      if (state.mode === "single") {
+        $("singleStage").classList.remove("hidden");
+        $("allPages").classList.add("hidden");
+        renderPreviewCanvas(canvas, state.current);
+        renderMarkers($("singleMarkers"), $("singleStage"), state.current);
+      } else {
+        $("singleStage").classList.add("hidden");
+        $("allPages").classList.remove("hidden");
+        renderAllPages();
+      }
+      updateRecordInfo();
+      syncBlockControls();
+      $("gridToggle").classList.toggle("active", state.showGrid);
+      $("deleteCurrentPage").disabled = !state.records.length;
+      $("canvasSize").textContent = `${canvas.width} × ${canvas.height}`;
+    }
+
+    function renderMarkers(container, stage, index) {
+      container.innerHTML = "";
+      state.blocks.forEach((block) => {
+        const effective = getEffectiveBlock(block, index);
+        if (!effective.visible) return;
+        const marker = document.createElement("div");
+        marker.className = `marker ${block.id === state.selectedBlockId ? "selected" : ""}`;
+        marker.tabIndex = 0;
+        marker.textContent = effective.label;
+        marker.style.left = `${effective.x}%`;
+        marker.style.top = `${effective.y}%`;
+        marker.addEventListener("click", (event) => {
+          event.stopPropagation();
+          state.selectedBlockId = block.id;
+          state.current = index;
+          state.alignmentGuide = null;
+          renderBlockSelect();
+          render();
+        });
+        makeMarkerDraggable(marker, stage, block.id, index);
+        container.appendChild(marker);
+      });
+    }
+
+    function renderAllPages() {
+      const wrap = $("allPages");
+      wrap.innerHTML = "";
+      const count = Math.max(state.records.length, 1);
+      for (let i = 0; i < count; i++) {
+        const stage = document.createElement("div");
+        stage.className = `page-stage ${i === state.current ? "active" : ""}`;
+        const pageCanvas = document.createElement("canvas");
+        const markerLayer = document.createElement("div");
+        stage.append(pageCanvas, markerLayer);
+        stage.addEventListener("click", () => {
+          state.current = i;
+          render();
+        });
+        renderPreviewCanvas(pageCanvas, i);
+        renderMarkers(markerLayer, stage, i);
+        wrap.appendChild(stage);
+      }
+    }
+
+    function makeMarkerDraggable(marker, stage, blockId, index) {
+      let dragging = false;
+      let changed = false;
+      let startX = 0;
+      let startY = 0;
+      let dragOffsetX = 0;
+      let dragOffsetY = 0;
+      const move = (clientX, clientY) => {
+        const rect = stage.getBoundingClientRect();
+        if (!changed) {
+          pushHistory();
+          changed = true;
+        }
+        state.current = index;
+        state.selectedBlockId = blockId;
+        marker.classList.add("selected");
+        const markerX = clientX - rect.left - dragOffsetX;
+        const markerY = clientY - rect.top - dragOffsetY;
+        updateBlockPatch(blockId, {
+          x: clamp((markerX / rect.width) * 100, 0, 100),
+          y: clamp((markerY / rect.height) * 100, 0, 100)
+        });
+        const targetCanvas = stage.querySelector("canvas");
+        if (targetCanvas) applyAutoAlignmentSnap(blockId, index, targetCanvas);
+        refreshSelectedBlockPosition(marker, blockId, index);
+        refreshStageCanvas(stage, index);
+        updateRecordInfo();
+        syncBlockControls();
+      };
+      marker.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dragging = true;
+        changed = false;
+        startX = event.clientX;
+        startY = event.clientY;
+        const rect = stage.getBoundingClientRect();
+        const block = state.blocks.find((item) => item.id === blockId);
+        const effective = block ? getEffectiveBlock(block, index) : { x: 0, y: 0 };
+        dragOffsetX = event.clientX - rect.left - (rect.width * effective.x / 100);
+        dragOffsetY = event.clientY - rect.top - (rect.height * effective.y / 100);
+        marker.setPointerCapture(event.pointerId);
+      });
+      marker.addEventListener("pointermove", (event) => {
+        if (!dragging) return;
+        if (!changed && Math.hypot(event.clientX - startX, event.clientY - startY) < 3) return;
+        move(event.clientX, event.clientY);
+      });
+      marker.addEventListener("pointerup", () => {
+        dragging = false;
+        if (changed) render();
+      });
+      marker.addEventListener("pointercancel", () => {
+        dragging = false;
+        if (changed) render();
+      });
+    }
+
+    function clamp(value, min, max) {
+      if (Number.isNaN(value)) return min;
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let field = "";
+      let quote = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const next = text[i + 1];
+        if (quote && c === '"' && next === '"') {
+          field += '"';
+          i++;
+        } else if (c === '"') {
+          quote = !quote;
+        } else if (!quote && (c === "," || c === "\t")) {
+          row.push(field.trim());
+          field = "";
+        } else if (!quote && (c === "\n" || c === "\r")) {
+          if (c === "\r" && next === "\n") i++;
+          row.push(field.trim());
+          if (row.some(Boolean)) rows.push(row);
+          row = [];
+          field = "";
+        } else {
+          field += c;
+        }
+      }
+      row.push(field.trim());
+      if (row.some(Boolean)) rows.push(row);
+      return rows;
+    }
+
+    function columnName(index) {
+      let name = "";
+      let n = index + 1;
+      while (n > 0) {
+        const rem = (n - 1) % 26;
+        name = String.fromCharCode(65 + rem) + name;
+        n = Math.floor((n - 1) / 26);
+      }
+      return name;
+    }
+
+    function rowsToRecords(rows) {
+      if (!rows.length) return [];
+      const headerKeywords = [
+        "班級", "姓名", "獎項", "備註", "班級上行", "班級下行",
+        "補習班名稱", "補習班", "補習班名稱(上)", "補習班名稱(下)", "補習班名稱（上）", "補習班名稱（下）",
+        "class", "name", "award", "note", "notes"
+      ];
+      const isHeaderLikeRow = (row) => {
+        const values = row.map((cell) => String(cell || "").trim()).filter(Boolean);
+        if (!values.length) return false;
+        const headerCount = values.filter((cell) => headerKeywords.includes(cell.toLowerCase())).length;
+        return headerCount === values.length;
+      };
+      const firstDataRowIndex = rows.findIndex((row) => row.some((cell) => String(cell || "").trim()));
+      if (firstDataRowIndex === -1) return [];
+      const first = rows[firstDataRowIndex].map((cell) => String(cell || "").trim());
+      const headers = first;
+      const dataRows = rows.slice(firstDataRowIndex + 1);
+      return dataRows.filter((row) => !isHeaderLikeRow(row)).map((row) => {
+        const record = {};
+        row.forEach((value, index) => {
+          const col = columnName(index);
+          record[col] = value ?? "";
+          if (headers[index]) {
+            record[headers[index]] = value ?? "";
+            record[normalizeFieldName(headers[index])] = value ?? "";
+          }
+        });
+        return normalizeRecord(record);
+      }).filter((record) => Object.values(record).some((value) => String(value || "").trim()));
+    }
+
+    function normalizeRecord(record) {
+      record["補習班名稱(上)"] = record["補習班名稱(上)"] ?? record["補習班名稱（上）"] ?? record["班級上行"] ?? "";
+      record["補習班名稱(下)"] = record["補習班名稱(下)"] ?? record["補習班名稱（下）"] ?? record["班級下行"] ?? "";
+      const cramLines = [record["補習班名稱(上)"], record["補習班名稱(下)"]].filter(Boolean);
+      record["補習班名稱"] = cramLines.length ? cramLines.join("\n") : record["補習班名稱"] || record["補習班"] || "";
+      record.班級 = record.班級 ?? record.class ?? record.Class ?? record.A ?? "";
+      record.姓名 = fieldValue(record, "姓名");
+      return record;
+    }
+
+    function setSheets(sheets, activeName = Object.keys(sheets)[0], saveHistory = true) {
+      if (saveHistory) pushHistory();
+      state.sheets = sheets;
+      renderSheetChoice();
+      setActiveSheet(activeName);
+    }
+
+    function setActiveSheet(name, saveHistory = false) {
+      if (saveHistory) pushHistory();
+      state.activeSheet = name;
+      state.records = state.sheets[name] || [];
+      state.current = 0;
+      state.pageOverrides = {};
+      $("sheetChoice").value = name || "";
+      renderPeopleList();
+      render();
+      setStatus(state.records.length ? `已載入「${name}」${state.records.length} 筆資料` : "沒有找到可用資料", !state.records.length);
+    }
+
+    function reindexPageOverridesAfterDelete(deletedIndex) {
+      const next = {};
+      Object.entries(state.pageOverrides).forEach(([key, value]) => {
+        const index = Number(key);
+        if (index < deletedIndex) next[index] = value;
+        if (index > deletedIndex) next[index - 1] = value;
+      });
+      state.pageOverrides = next;
+    }
+
+    function refreshDataViews(message = "") {
+      renderSheetChoice();
+      $("sheetChoice").value = state.activeSheet || "";
+      renderPeopleList();
+      render();
+      if (message) setStatus(message);
+    }
+
+    function deleteRecordAt(index) {
+      if (!state.records.length || index < 0 || index >= state.records.length) return;
+      pushHistory();
+      const label = recordDisplayText(state.records[index]) || `第 ${index + 1} 頁`;
+      state.records.splice(index, 1);
+      if (state.activeSheet && state.sheets[state.activeSheet]) {
+        state.sheets[state.activeSheet] = state.records;
+      }
+      reindexPageOverridesAfterDelete(index);
+      state.current = Math.min(index, Math.max(state.records.length - 1, 0));
+      refreshDataViews(`已刪除：${label}`);
+    }
+
+    function clearImportData() {
+      if (!Object.keys(state.sheets).length && !state.records.length) return;
+      pushHistory();
+      state.sheets = {};
+      state.activeSheet = "";
+      state.records = [];
+      state.current = 0;
+      state.pageOverrides = {};
+      $("sheetUrl").value = "";
+      $("csvPaste").value = "";
+      $("excelFile").value = "";
+      refreshDataViews("已清除目前匯入資料");
+    }
+
+    function renderSheetChoice() {
+      $("sheetChoice").innerHTML = "";
+      const names = Object.keys(state.sheets);
+      if (!names.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "尚未匯入";
+        $("sheetChoice").appendChild(option);
+        return;
+      }
+      names.forEach((name) => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = `${name}（${state.sheets[name].length}）`;
+        $("sheetChoice").appendChild(option);
+      });
+    }
+
+    function recordDisplayText(record) {
+      const cramName = record["補習班名稱"] || record["補習班"] || "";
+      const cramTop = record["補習班名稱(上)"] || record["補習班名稱（上）"] || "";
+      const cramBottom = record["補習班名稱(下)"] || record["補習班名稱（下）"] || "";
+      const classText = cramName.replace(/\r?\n/g, " ") || [cramTop, cramBottom].filter(Boolean).join(" ") || record.班級 || record.A || "";
+      return `${classText} ${record.姓名 || record.B || ""}`.trim();
+    }
+
+    function renderPeopleList() {
+      const list = $("peopleList");
+      list.innerHTML = "";
+      if (!state.records.length) {
+        const empty = document.createElement("div");
+        empty.className = "person";
+        empty.textContent = "尚無名單";
+        list.appendChild(empty);
+        return;
+      }
+      state.records.forEach((record, index) => {
+        const item = document.createElement("div");
+        item.className = "person";
+        const text = document.createElement("span");
+        text.textContent = `${index + 1}. ${recordDisplayText(record)}`.trim();
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "預覽";
+        button.addEventListener("click", () => {
+          state.current = index;
+          render();
+        });
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.textContent = "編輯";
+        editButton.addEventListener("click", () => openRecordEditor(index));
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "danger";
+        deleteButton.textContent = "刪除";
+        deleteButton.addEventListener("click", () => deleteRecordAt(index));
+        item.append(text, button, editButton, deleteButton);
+        list.appendChild(item);
+      });
+    }
+
+    function editableRecordKeys(record) {
+      const preferred = ["A", "B", "C", "班級", "姓名", "補習班名稱", "補習班名稱(上)", "補習班名稱(下)", "獎項", "備註"];
+      const hasSplitCramName = Boolean(record["補習班名稱(上)"] || record["補習班名稱(下)"]);
+      if (hasSplitCramName) return ["補習班名稱(上)", "補習班名稱(下)", "姓名"];
+      const keys = Object.keys(record).filter((key) => !["class", "Class", "name", "Name"].includes(key) && !(hasSplitCramName && key === "補習班名稱"));
+      return [...preferred.filter((key) => keys.includes(key)), ...keys.filter((key) => !preferred.includes(key))];
+    }
+
+    function openRecordEditor(index) {
+      if (!state.records[index]) return;
+      editingRecordIndex = index;
+      const fields = $("recordEditorFields");
+      fields.innerHTML = "";
+      editableRecordKeys(state.records[index]).forEach((key) => {
+        const row = document.createElement("div");
+        row.className = "field-editor";
+        const label = document.createElement("label");
+        label.textContent = key;
+        label.htmlFor = `edit_${key}`;
+        const input = document.createElement("textarea");
+        input.id = `edit_${key}`;
+        input.dataset.key = key;
+        input.value = state.records[index][key] ?? "";
+        input.rows = String(input.value).includes("\n") ? 3 : 1;
+        row.append(label, input);
+        fields.appendChild(row);
+      });
+      $("recordEditor").classList.remove("hidden");
+    }
+
+    function closeRecordEditor() {
+      editingRecordIndex = -1;
+      $("recordEditor").classList.add("hidden");
+    }
+
+    function saveRecordEditor() {
+      if (editingRecordIndex < 0 || !state.records[editingRecordIndex]) return;
+      pushHistory();
+      const nextRecord = { ...state.records[editingRecordIndex] };
+      [...$("recordEditorFields").querySelectorAll("[data-key]")].forEach((input) => {
+        nextRecord[input.dataset.key] = input.value;
+        nextRecord[normalizeFieldName(input.dataset.key)] = input.value;
+      });
+      state.records[editingRecordIndex] = normalizeRecord(nextRecord);
+      if (state.activeSheet && state.sheets[state.activeSheet]) state.sheets[state.activeSheet] = state.records;
+      state.current = editingRecordIndex;
+      closeRecordEditor();
+      refreshDataViews("已更新匯入資料");
+    }
+
+    function updateRecordInfo() {
+      if (!state.records.length) {
+        $("recordInfo").textContent = "使用範例姓名預覽";
+        return;
+      }
+      const record = getRecord();
+      $("recordInfo").textContent = `${state.current + 1} / ${state.records.length}：${recordDisplayText(record)}`;
+    }
+
+    function parseGoogleSheetInfo(url) {
+      if (!url.includes("docs.google.com/spreadsheets")) return null;
+      const idMatch = url.match(/\/d\/([^/]+)/);
+      if (!idMatch) return null;
+      const gidMatch = url.match(/[?&#]gid=([0-9]+)/);
+      return { id: idMatch[1], gid: gidMatch ? gidMatch[1] : "0" };
+    }
+
+    function parseGoogleSheetTabs(html) {
+      const tabs = [];
+      const addTab = (name, gid = "") => {
+        const cleanName = String(name || "").replace(/\\u003d/g, "=").trim();
+        if (cleanName && !tabs.some((tab) => tab.name === cleanName || (gid && tab.gid === gid))) {
+          tabs.push(gid ? { name: cleanName, gid } : { name: cleanName, sheet: cleanName, fallback: true });
+        }
+      };
+      const chunks = html.split('[21350203,"').slice(1);
+      chunks.forEach((chunk) => {
+        const gid = chunk.match(/^\[\d+,\d+,\\?"([^"\\]+)\\?"/)?.[1];
+        const nameMatches = [...chunk.slice(0, 1400).matchAll(/\[\[0,0,\\?"([^"\\]+)\\?"/g)];
+        const name = nameMatches.length ? nameMatches[nameMatches.length - 1][1] : "";
+        addTab(name, gid);
+      });
+      [...html.matchAll(/docs-sheet-tab-caption">([^<]+)</g)].forEach((match) => {
+        addTab(match[1]);
+      });
+      return tabs;
+    }
+
+    async function discoverGoogleSheetTabs(info) {
+      const editUrl = `https://docs.google.com/spreadsheets/d/${info.id}/edit?usp=sharing`;
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(editUrl)}`;
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 9000);
+        const response = await fetch(proxyUrl, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const tabs = parseGoogleSheetTabs(await response.text());
+        if (tabs.length) return tabs;
+      } catch (error) {
+        console.warn("無法自動取得工作表清單，改用常見名稱探測。", error);
+      }
+      const fallbackNames = [
+        "個人第一名", "個人第二名", "個人第三名", "個人第四名", "個人第五名",
+        "團體獎", "團體第一名", "團體第二名", "團體第三名",
+        "第一名", "第二名", "第三名", "第四名", "第五名",
+        "工作表1", "工作表2", "工作表3", "工作表4", "工作表5",
+        "Sheet1", "Sheet2", "Sheet3", "Sheet4", "Sheet5"
+      ];
+      return fallbackNames.map((name) => ({ name, sheet: name, fallback: true }));
+    }
+
+    function recordSignature(records) {
+      return JSON.stringify(records.map((record) => ({
+        A: record.A ?? "",
+        B: record.B ?? "",
+        C: record.C ?? "",
+        班級: record.班級 ?? "",
+        姓名: record.姓名 ?? ""
+      })));
+    }
+
+    function loadGoogleSheetRowsByTab(info, tab) {
+      return new Promise((resolve, reject) => {
+        const callbackName = `sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement("script");
+        const query = tab.gid
+          ? `gid=${encodeURIComponent(tab.gid)}`
+          : `sheet=${encodeURIComponent(tab.sheet || tab.name)}`;
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("Google Sheet 讀取逾時"));
+        }, 10000);
+        const cleanup = () => {
+          clearTimeout(timer);
+          delete window[callbackName];
+          script.remove();
+        };
+        window[callbackName] = (response) => {
+          cleanup();
+          if (response.status === "error") {
+            reject(new Error(response.errors?.[0]?.detailed_message || "Google Sheet 讀取失敗"));
+            return;
+          }
+          const cols = response.table?.cols || [];
+          const header = cols.map((col) => String(col?.label || "").trim());
+          const rows = (response.table?.rows || []).map((row) => {
+            const cells = row.c || [];
+            return cols.length
+              ? cols.map((_, index) => cells[index]?.f ?? cells[index]?.v ?? "")
+              : cells.map((cell) => cell?.f ?? cell?.v ?? "");
+          });
+          if (response.table?.parsedNumHeaders && header.some(Boolean)) {
+            resolve([header, ...rows]);
+            return;
+          }
+          resolve(rows);
+        };
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("Google Sheet 讀取失敗"));
+        };
+        script.src = `https://docs.google.com/spreadsheets/d/${info.id}/gviz/tq?${query}&range=A:Z&tqx=out:json;responseHandler:${callbackName}`;
+        document.body.appendChild(script);
+      });
+    }
+
+    async function loadGoogleWorkbook(url) {
+      const info = parseGoogleSheetInfo(url);
+      if (!info) return null;
+      const tabs = await discoverGoogleSheetTabs(info);
+      const sheets = {};
+      const signatures = new Set();
+      for (const tab of tabs) {
+        try {
+          const records = rowsToRecords(await loadGoogleSheetRowsByTab(info, tab));
+          const signature = recordSignature(records);
+          if (records.length && (!tab.fallback || !signatures.has(signature))) {
+            sheets[tab.name] = records;
+            signatures.add(signature);
+          }
+        } catch (error) {
+          console.warn(`略過無法讀取的工作表：${tab.name}`, error);
+        }
+      }
+      if (!Object.keys(sheets).length) {
+        const rows = await loadGoogleSheetRowsByTab(info, { name: "GoogleSheet", gid: info.gid });
+        sheets.GoogleSheet = rowsToRecords(rows);
+      }
+      return sheets;
+    }
+
+    async function loadSheetLink() {
+      const source = $("sheetUrl").value.trim();
+      if (!source) {
+        setStatus("請先貼上 Google Sheet 或 CSV 連結", true);
+        return;
+      }
+      setStatus("正在匯入資料...");
+      try {
+        const googleSheets = await loadGoogleWorkbook(source);
+        if (googleSheets) {
+          setSheets(googleSheets, Object.keys(googleSheets)[0]);
+        } else {
+          const response = await fetch(source);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const text = await response.text();
+          setSheets({ CSV: rowsToRecords(parseCsv(text)) }, "CSV");
+        }
+      } catch (error) {
+        setStatus("匯入失敗。請確認 Google Sheet 已設為知道連結的使用者可檢視，或改貼 CSV 內容。", true);
+      }
+    }
+
+    async function loadExcelFile(file) {
+      if (!file) return;
+      if (!window.XLSX) {
+        setStatus("Excel 解析工具尚未載入，請確認網路可連到 CDN 後重新整理。", true);
+        return;
+      }
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const sheets = {};
+      workbook.SheetNames.forEach((name) => {
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1, defval: "" });
+        sheets[name] = rowsToRecords(rows);
+      });
+      setSheets(sheets, workbook.SheetNames[0]);
+    }
+
+    function addBlock() {
+      pushHistory();
+      const id = `text_${Date.now()}`;
+      state.blocks.push(makeBlock(id, "新增文字", "{C}", 50, 58, 44, "center", 0));
+      state.selectedBlockId = id;
+      renderBlockSelect();
+      render();
+    }
+
+    function setBlockVisible(id, visible) {
+      const block = state.blocks.find((item) => item.id === id);
+      if (block) block.visible = visible;
+    }
+
+    function setBlockDefaults(id, patch) {
+      const block = state.blocks.find((item) => item.id === id);
+      if (block) Object.assign(block, patch);
+    }
+
+    function applyFormatPreset(preset) {
+      pushHistory();
+      if (preset === "cram") {
+        setBlockVisible("school", false);
+        setBlockVisible("name", false);
+        setBlockVisible("cramClass", true);
+        setBlockVisible("cramName", true);
+        state.selectedBlockId = "cramClass";
+      } else if (preset === "schoolGroup") {
+        setBlockVisible("school", true);
+        setBlockVisible("name", true);
+        setBlockVisible("cramClass", false);
+        setBlockVisible("cramName", false);
+        setBlockDefaults("name", { label: "班級＋姓名(學校團體)", x: 27, y: fromControlY(56.8) });
+        state.selectedBlockId = "name";
+      } else {
+        setBlockVisible("school", true);
+        setBlockVisible("name", true);
+        setBlockVisible("cramClass", false);
+        setBlockVisible("cramName", false);
+        setBlockDefaults("name", { label: "班級＋姓名(學校個人)", x: 26.4, y: fromControlY(56.8) });
+        state.selectedBlockId = "name";
+      }
+      renderBlockSelect();
+      render();
+    }
+
+    function removeBlock() {
+      const block = selectedBlock();
+      if (!block) return;
+      pushHistory();
+      if (block.system) {
+        updateBlockPatch(block.id, { visible: false });
+      } else {
+        state.blocks = state.blocks.filter((item) => item.id !== block.id);
+        Object.values(state.pageOverrides).forEach((page) => delete page[block.id]);
+        state.selectedBlockId = state.blocks[0]?.id || "";
+      }
+      renderBlockSelect();
+      render();
+    }
+
+    function applyControlChange() {
+      const block = selectedBlock();
+      if (!block) return;
+      const numberInputs = ["blockX", "blockY", "blockFontSize", "blockLineHeight"];
+      if (numberInputs.includes(document.activeElement?.id)) {
+        const value = document.activeElement.value;
+        if (value === "" || Number.isNaN(Number(value))) return;
+      }
+      pushHistory();
+      updateBlockPatch(block.id, {
+        label: $("blockLabel").value,
+        template: $("blockTemplate").value,
+        visible: $("blockVisible").checked,
+        x: clamp(Number($("blockX").value), 0, 100),
+        y: fromControlY($("blockY").value),
+        align: $("blockAlign").value,
+        size: clamp(Number($("blockFontSize").value), 8, 220),
+        lineHeight: clamp(Number($("blockLineHeight").value), 0.8, 2),
+        color: $("blockColor").value,
+        fontIndex: Number($("blockFontFamily").value)
+      });
+      renderBlockSelect();
+      render();
+    }
+
+    function setMode(mode) {
+      if (state.mode !== mode) pushHistory();
+      state.mode = mode;
+      $("singleMode").classList.toggle("active", mode === "single");
+      $("allMode").classList.toggle("active", mode === "all");
+      $("scopeHint").textContent = mode === "single"
+        ? "單頁模式會套用到所有頁面；全頁模式只調整目前選取頁。"
+        : "全頁模式正在編輯目前選取頁，不會影響其他頁面。";
+      render();
+    }
+
+    function downloadCanvas(filename) {
+      renderCanvas(canvas, state.current);
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    async function downloadAll() {
+      const count = Math.max(state.records.length, 1);
+      const offscreen = document.createElement("canvas");
+      for (let i = 0; i < count; i++) {
+        renderCanvas(offscreen, i);
+        const link = document.createElement("a");
+        link.download = filenameFor(i);
+        link.href = offscreen.toDataURL("image/png");
+        link.click();
+        setStatus(`已送出 ${i + 1} / ${count} 張下載`);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+    }
+
+    function downloadBlob(blob, filename) {
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+    }
+
+    function filenameFor(index) {
+      const record = getRecord(index);
+      return `獎狀_${recordDisplayText(record) || index + 1}.png`.replace(/[\\/:*?"<>|]/g, "_");
+    }
+
+    function dataUrlToBytes(dataUrl) {
+      const base64 = dataUrl.split(",")[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    function textBytes(text) {
+      return new TextEncoder().encode(text);
+    }
+
+    function buildPdf(pages) {
+      const parts = [];
+      const offsets = [0];
+      let length = 0;
+      const add = (part) => {
+        const bytes = typeof part === "string" ? textBytes(part) : part;
+        parts.push(bytes);
+        length += bytes.length;
+      };
+      const startObject = (id) => {
+        offsets[id] = length;
+        add(`${id} 0 obj\n`);
+      };
+      const pageIds = pages.map((_, index) => 3 + index * 3);
+      add("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+      startObject(1);
+      add("<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+      startObject(2);
+      add(`<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pages.length} >>\nendobj\n`);
+      pages.forEach((page, index) => {
+        const pageId = 3 + index * 3;
+        const imageId = pageId + 1;
+        const contentId = pageId + 2;
+        const content = `q\n${page.width} 0 0 ${page.height} 0 0 cm\n/Im${index + 1} Do\nQ\n`;
+        startObject(pageId);
+        add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.width} ${page.height}] /Resources << /XObject << /Im${index + 1} ${imageId} 0 R >> >> /Contents ${contentId} 0 R >>\nendobj\n`);
+        startObject(imageId);
+        add(`<< /Type /XObject /Subtype /Image /Width ${page.width} /Height ${page.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.bytes.length} >>\nstream\n`);
+        add(page.bytes);
+        add("\nendstream\nendobj\n");
+        startObject(contentId);
+        add(`<< /Length ${textBytes(content).length} >>\nstream\n${content}endstream\nendobj\n`);
+      });
+      const xrefStart = length;
+      add(`xref\n0 ${offsets.length}\n0000000000 65535 f \n`);
+      for (let i = 1; i < offsets.length; i++) {
+        add(`${String(offsets[i]).padStart(10, "0")} 00000 n \n`);
+      }
+      add(`trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
+      return new Blob(parts, { type: "application/pdf" });
+    }
+
+    async function downloadPdf() {
+      const count = Math.max(state.records.length, 1);
+      const pages = [];
+      const offscreen = document.createElement("canvas");
+      setStatus(`正在建立 PDF：0 / ${count}`);
+      if (document.fonts?.ready) {
+        await Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, 1500))]);
+      }
+      for (let i = 0; i < count; i++) {
+        renderCanvas(offscreen, i);
+        pages.push({
+          width: offscreen.width,
+          height: offscreen.height,
+          bytes: dataUrlToBytes(offscreen.toDataURL("image/jpeg", 0.95))
+        });
+        setStatus(`正在建立 PDF：${i + 1} / ${count}`);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      downloadBlob(buildPdf(pages), "獎狀_合併.pdf");
+      setStatus(`已建立 PDF，共 ${count} 頁`);
+    }
+
+    function nudgeSelectedBlock(event) {
+      const keyMap = {
+        ArrowLeft: [-1, 0],
+        ArrowRight: [1, 0],
+        ArrowUp: [0, -1],
+        ArrowDown: [0, 1]
+      };
+      if (!keyMap[event.key]) return;
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName)) return;
+      const block = selectedBlock();
+      if (!block) return;
+      const effective = getEffectiveBlock(block, state.current);
+      const step = event.shiftKey ? 1 : 0.2;
+      const [dx, dy] = keyMap[event.key];
+      event.preventDefault();
+      pushHistory();
+      updateBlockPatch(block.id, {
+        x: clamp(Number(effective.x) + dx * step, 0, 100),
+        y: clamp(Number(effective.y) + dy * step, 0, 100)
+      });
+      render();
+    }
+
+    function handleKeyboardShortcuts(event) {
+      if (event.key === "Escape" && !$("recordEditor").classList.contains("hidden")) {
+        closeRecordEditor();
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z" && !event.shiftKey) {
+        if (!state.history.length) return;
+        event.preventDefault();
+        undoLastAction();
+        return;
+      }
+      nudgeSelectedBlock(event);
+    }
+
+    function bindEvents() {
+      $("templateFile").addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const image = new Image();
+        image.onload = () => {
+          state.image = image;
+          render();
+          setStatus(`已載入底稿：${file.name}`);
+        };
+        image.src = URL.createObjectURL(file);
+      });
+      $("excelFile").addEventListener("change", (event) => loadExcelFile(event.target.files[0]));
+      $("sheetChoice").addEventListener("change", (event) => setActiveSheet(event.target.value, true));
+      $("loadSheet").addEventListener("click", loadSheetLink);
+      $("parseCsv").addEventListener("click", () => setSheets({ CSV: rowsToRecords(parseCsv($("csvPaste").value)) }, "CSV"));
+      $("clearImportData").addEventListener("click", clearImportData);
+      $("loadSample").addEventListener("click", () => {
+        $("csvPaste").value = "班級,姓名\n701,陳翰翰\n702,林小雲";
+        setSheets({
+          學校版: rowsToRecords(parseCsv("班級,姓名\n701,陳翰翰\n702,林小雲")),
+          補習班版: rowsToRecords(parseCsv("補習班名稱(上),補習班名稱(下),姓名\n翰林,補習班,王小明\n文理,補習班,陳小華"))
+        }, "學校版");
+      });
+      $("formatPreset").addEventListener("change", (event) => applyFormatPreset(event.target.value));
+      $("blockSelect").addEventListener("change", (event) => {
+        state.selectedBlockId = event.target.value;
+        state.alignmentGuide = null;
+        syncBlockControls();
+        render();
+      });
+      ["blockLabel", "blockTemplate", "blockVisible", "blockX", "blockY", "blockAlign", "blockFontSize", "blockLineHeight", "blockColor", "blockFontFamily"].forEach((id) => {
+        $(id).addEventListener("input", applyControlChange);
+        $(id).addEventListener("change", applyControlChange);
+      });
+      $("addBlock").addEventListener("click", addBlock);
+      $("removeBlock").addEventListener("click", removeBlock);
+      $("alignLeft").addEventListener("click", () => alignVisibleBlocks("left"));
+      $("alignRight").addEventListener("click", () => alignVisibleBlocks("right"));
+      $("alignTop").addEventListener("click", () => alignVisibleBlocks("top"));
+      $("alignBottom").addEventListener("click", () => alignVisibleBlocks("bottom"));
+      $("undoAction").addEventListener("click", undoLastAction);
+      $("singleMode").addEventListener("click", () => setMode("single"));
+      $("allMode").addEventListener("click", () => setMode("all"));
+      $("gridToggle").addEventListener("click", () => {
+        state.showGrid = !state.showGrid;
+        render();
+      });
+      $("prevRecord").addEventListener("click", () => {
+        if (!state.records.length) return;
+        state.current = (state.current - 1 + state.records.length) % state.records.length;
+        render();
+      });
+      $("nextRecord").addEventListener("click", () => {
+        if (!state.records.length) return;
+        state.current = (state.current + 1) % state.records.length;
+        render();
+      });
+      $("deleteCurrentPage").addEventListener("click", () => deleteRecordAt(state.current));
+      $("downloadOne").addEventListener("click", () => downloadCanvas(filenameFor(state.current)));
+      $("downloadAll").addEventListener("click", downloadAll);
+      $("downloadPdf").addEventListener("click", downloadPdf);
+      $("saveRecordEdit").addEventListener("click", saveRecordEditor);
+      $("cancelRecordEdit").addEventListener("click", closeRecordEditor);
+      $("recordEditor").addEventListener("click", (event) => {
+        if (event.target === $("recordEditor")) closeRecordEditor();
+      });
+      document.addEventListener("keydown", handleKeyboardShortcuts);
+    }
+
+    populateFonts();
+    renderBlockSelect();
+    renderSheetChoice();
+    bindEvents();
+    updateUndoButton();
+    renderPeopleList();
+    render();
+    window.certificateState = state;
+  </script>
+</body>
+</html>
